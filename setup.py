@@ -9,11 +9,7 @@ import setuptools
 
 if __name__ == '__main__':
 
-    description_short = (
-        "This module is for you if you're tired of writing boilerplate that:"
-        "\n- build a straightforward Python object from loaded JSON."
-        "\n- checks that your input JSON has all necessary attributes for your pipeline."
-        "\n- checks that your input JSON has the right types.")
+    description_short = "No more boilerplate to check and build a Python object from JSON."
 
     readme_path = os.path.join(os.path.dirname(__file__), 'README.md')
     with open(readme_path, "r") as fh:
@@ -21,10 +17,11 @@ if __name__ == '__main__':
 
     setuptools.setup(
         name="jsonloader",
-        version="0.4",
+        version="0.4.1",
         author_email="ohmajesticlama@gmail.com",
         description=description_short,
         long_description=long_description,
+        long_description_content_type='text/markdown',
         url="https://github.com/OhMajesticLama/jsonloader",
         packages=setuptools.find_packages(),
         install_requires=[

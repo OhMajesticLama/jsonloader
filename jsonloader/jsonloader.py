@@ -19,10 +19,12 @@ def JSONclass(cls=None,
         annotations_strict : bool = False,
         annotations_type : bool = False):
     """
+    >>> # By default we don't check for anything, we just build the object
+    >>> # as we received it.
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
     >>> @JSONClass
     ... class Example:
-    ...     a : str
+    ...     pass
     ...
     >>> wrapper = Example(data)
     >>> wrapper.a
@@ -30,6 +32,7 @@ def JSONclass(cls=None,
     >>> wrapper.b
     'bb'
 
+    >>> # We want to ensure we have annotated parameters
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
     >>> @JSONClass(annotations=True)
     ... class Example:
@@ -40,8 +43,10 @@ def JSONclass(cls=None,
     ...     wrapper = Example(data)
     ... except KeyError:
     ...     print("error - missing 'd'")
-    "error - missing 'd'"
+    ...
+    error - missing 'd'
     
+    >>> # We want to ensure we have *only* annotated parameters
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
     >>> @JSONClass(annotations=True, annotations_strict=True)
     ... class Example:
@@ -52,9 +57,11 @@ def JSONclass(cls=None,
     ...     wrapper = Example(data)
     ... except KeyError:
     ...     print("error - extra 'c'")
-    "error - extra 'c'"
+    ...
+    error - extra 'c'
 
-
+    >>> # We want to ensure we have only annotated parameters and they
+    >>> # are of annotated type.
     >>> data = {'a': 'aa', 'b': 'bb'}
     >>> @JSONClass(annotations=True, annotations_strict=True, annotations_type=True)
     ... class Example:
@@ -65,7 +72,8 @@ def JSONclass(cls=None,
     ...     wrapper = Example(data)
     ... except TypeError:
     ...     print("error - b is int")
-    "error - b is int"
+    ...
+    error - b is int
     """
     def decorator(cls):
         custom_jsonwrapper = wrapper_factory(
@@ -277,21 +285,6 @@ class JSONWrapper:
     def __repr__(self):
         return repr(self.__dict__)
 
-
-#def check_annotated_type(value : Any, annotated_type : type):
-#    "Check that `value` matches `annotated_type`"
-#    if annotated_type is Any:
-#        return
-#    elif isinstance(t, list):
-#        # User annotated with name : [str] or similar
-#        if len(t):
-#            raise NotImplementedError
-#    elif issubclass(t, list):
-#        if True: raise NotImplementedError
-#    elif issubclass(t, List):
-#        raise NotImplementedError  # Use t.args
-#    elif not isinstance(json_loaded_object[k], annotated_type):
-#        raise TypeError(f"{value} type not matching {annotated_type}")
 
 JSONWrapperAnnotations = wrapper_factory(annotations=True)
 
