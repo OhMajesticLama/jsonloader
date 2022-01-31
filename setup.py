@@ -17,13 +17,14 @@ if __name__ == '__main__':
 
     setuptools.setup(
         name="jsonloader",
-        version="0.4.1",
+        version="0.4.2",
         author_email="ohmajesticlama@gmail.com",
         description=description_short,
         long_description=long_description,
         long_description_content_type='text/markdown',
         url="https://github.com/OhMajesticLama/jsonloader",
         packages=setuptools.find_packages(),
+        python_requires=">=3.8.10",
         install_requires=[
             'typeguard >= 2.13.3'
             ],
@@ -32,7 +33,9 @@ if __name__ == '__main__':
                 'nose2 >= 0.10.0',
                 'mypy >= 0.931',
                 'coverage >= 6.3',
-                'build >= 0.7.0'
+                'build >= 0.7.0',
+                'ipython >= 8.0.1',
+                'ipdb >= 0.13.9'
                 ]
             },
         classifiers=[

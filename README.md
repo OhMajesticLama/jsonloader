@@ -7,59 +7,67 @@ This module is for you if you're tired of writing boilerplate that:
 
 
 ## Example
-Main intended usage is through the `JSONclass decorator`, example below:
+Main intended usage is through the `JSONclass` decorator, example below:
+
 ```python
+
+>>> from jsonloader import JSONclass
 >>> # By default we don't check for anything, we just build the object
 >>> # as we received it.
 >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
->>> @JSONClass
+>>> @JSONclass
 ... class Example:
 ...     pass
 ...
->>> wrapper = Example(data)
->>> wrapper.a
+>>> example = Example(data)
+>>> example.a
 'aa'
->>> wrapper.b
+>>> example.b
 'bb'
-
+>>>
 >>> # We want to ensure we have annotated parameters
 >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
->>> @JSONClass(annotations=True)
+>>> @JSONclass(annotations=True)
 ... class Example:
 ...     a : str
 ...     d : int
 ...
 >>> try:
-...     wrapper = Example(data)
+...     example = Example(data)
 ... except KeyError:
 ...     print("error - missing 'd'")
 ...
 error - missing 'd'
-
+>>> data['d'] = 1  # Let's fix the missing data
+>>> example = Example(data)  # No more error in loading.
+>>>
+>>>
 >>> # We want to ensure we have *only* annotated parameters
 >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
->>> @JSONClass(annotations=True, annotations_strict=True)
+>>> @JSONclass(annotations=True, annotations_strict=True)
 ... class Example:
 ...     a : str
 ...     b : int
 ...
 >>> try:
-...     wrapper = Example(data)
+...     example = Example(data)
 ... except KeyError:
 ...     print("error - extra 'c'")
 ...
 error - extra 'c'
-
->>> # We want to check we have only annotated parameters and they
+>>> del data['c']  # Let's remove unwanted data
+>>> example = Example(data)  # No more error in loading.
+>>>
+>>> # We want to ensure we have only annotated parameters and they
 >>> # are of annotated type.
 >>> data = {'a': 'aa', 'b': 'bb'}
->>> @JSONClass(annotations=True, annotations_strict=True, annotations_type=True)
+>>> @JSONclass(annotations=True, annotations_strict=True, annotations_type=True)
 ... class Example:
 ...     a : str
 ...     b : int
 ...
 >>> try:
-...     wrapper = Example(data)
+...     example = Example(data)
 ... except TypeError:
 ...     print("error - b is int")
 ...
@@ -76,6 +84,11 @@ pip3 install jsonloader
 ```
 
 ### Developer installation
+
+Github repository currently points to latest development version. Please
+jump to latest released version tag if you intend to work on PyPI version.
+For example `git checkout tags/0.4.2`.
+
 ```
 python3 -m virtualenv venv
 . venv/bin/activate
@@ -85,8 +98,8 @@ pip3 install -e '.[dev]'
 ## Run Tests
 
 ```
-# From git directory
-nose2 -t .
+# From this repository top directory
+nose2 -t . --with-doctest
 ```
 
 ### Tests coverage

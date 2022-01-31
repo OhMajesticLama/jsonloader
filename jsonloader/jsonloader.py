@@ -19,57 +19,63 @@ def JSONclass(cls=None,
         annotations_strict : bool = False,
         annotations_type : bool = False):
     """
+    >>> from jsonloader import JSONclass
     >>> # By default we don't check for anything, we just build the object
     >>> # as we received it.
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
-    >>> @JSONClass
+    >>> @JSONclass
     ... class Example:
     ...     pass
     ...
-    >>> wrapper = Example(data)
-    >>> wrapper.a
+    >>> example = Example(data)
+    >>> example.a
     'aa'
-    >>> wrapper.b
+    >>> example.b
     'bb'
-
+    >>>
     >>> # We want to ensure we have annotated parameters
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
-    >>> @JSONClass(annotations=True)
+    >>> @JSONclass(annotations=True)
     ... class Example:
     ...     a : str
     ...     d : int
     ...
     >>> try:
-    ...     wrapper = Example(data)
+    ...     example = Example(data)
     ... except KeyError:
     ...     print("error - missing 'd'")
     ...
     error - missing 'd'
-    
+    >>> data['d'] = 1  # Let's fix the missing data
+    >>> example = Example(data)  # No more error in loading.
+    >>>
+    >>>
     >>> # We want to ensure we have *only* annotated parameters
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
-    >>> @JSONClass(annotations=True, annotations_strict=True)
+    >>> @JSONclass(annotations=True, annotations_strict=True)
     ... class Example:
     ...     a : str
     ...     b : int
     ...
     >>> try:
-    ...     wrapper = Example(data)
+    ...     example = Example(data)
     ... except KeyError:
     ...     print("error - extra 'c'")
     ...
     error - extra 'c'
-
+    >>> del data['c']  # Let's remove unwanted data
+    >>> example = Example(data)  # No more error in loading.
+    >>>
     >>> # We want to ensure we have only annotated parameters and they
     >>> # are of annotated type.
     >>> data = {'a': 'aa', 'b': 'bb'}
-    >>> @JSONClass(annotations=True, annotations_strict=True, annotations_type=True)
+    >>> @JSONclass(annotations=True, annotations_strict=True, annotations_type=True)
     ... class Example:
     ...     a : str
     ...     b : int
     ...
     >>> try:
-    ...     wrapper = Example(data)
+    ...     example = Example(data)
     ... except TypeError:
     ...     print("error - b is int")
     ...
@@ -149,10 +155,7 @@ class JSONWrapper:
             annotations_strict : bool = False,
             annotations_type : bool = False):
         """
-        >>> # JSON object must be loaded JSON (e.g. with json standard module).
-        ... # Or spelled differently: a Python dictionary of dictionaries, list,
-        ... # str, int, floats, bool, None. If the structure is recursive, the
-        ... # tree leaves must be int, float, bool, None or str instances. 
+        >>> # JSON object should be loaded JSON (e.g. with json standard module).
         >>> json_obj = {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
         >>> wrapper = JSONWrapper(json_obj)
         >>> vars(wrapper)
@@ -161,14 +164,6 @@ class JSONWrapper:
         'bar'
         >>> wrapper
         {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
-        >>> # JSONWrapper will refuse to wrap non-JSON types
-        >>> json_obj['func'] = map
-        >>> try:
-        ...     JSONWrapper(json_obj)
-        ... except TypeError as exc:
-        ...     print('I got an error')
-        'I got an error'
-
         """
         annotations = (annotations
                 or annotations_type
@@ -189,54 +184,58 @@ class JSONWrapper:
                     keys_a.difference(keys_j), json_loaded_object
                     ))
 
-                if annotations_strict and not keys_j.issubset(keys_a):
-                    # We want strict overlap between annotations and JSON object.
-                    raise KeyError(
-                        "({}) JSON keys not found in annotations ({})".format(
-                        keys_j.difference(keys_a),  keys_a
-                        ))
+            if annotations_strict and not keys_j.issubset(keys_a):
+                # We want strict overlap between annotations and JSON object.
+                raise KeyError(
+                    "({}) JSON keys not found in annotations ({})".format(
+                    keys_j.difference(keys_a),  keys_a
+                    ))
 
-                if annotations_type:
-                    for k, t in cls.__annotations__.items():
-                        try:
-                            typeguard.check_type(k, json_loaded_object[k], t)
-                            #check_annotated_type(json_loaded_object[k], t)
-                        except TypeError:
-                            raise TypeError(
-                                    "({}:{}) is not a value "
-                                    "of annotated type {}".format(k,
-                                        json_loaded_object[k], t))
-                        continue 
-                        #if t is Any:
-                        #    continue
-                        #if not isinstance(json_loaded_object[k], t):
-                        #    raise TypeError(
-                        #            "({}:{}) is not a value "
-                        #            "of annotated type {}".format(k,
-                        #                json_loaded_object[k], t))
-                        #elif isinstance(t, list):
-                        #    # User annotated with name : [str] or similar
-                        #    if len(t):
-                        #        raise NotImplementedError
-                        #elif issubclass(t, list):
-                        #    if True: raise NotImplementedError
-                        #elif issubclass(t, List):
-            
+        if (annotations_type
+                and hasattr(cls, '__annotations__')
+                and hasattr(json_loaded_object, dict.items.__name__)):
+            for k, v in json_loaded_object.items():
+                if k in cls.__annotations__:
+                    # Let coverage to annotations and annotations_strict checks
+                    # Just check that when we have data here it is expected type
+                    t = cls.__annotations__[k]
+                    if isinstance(t, list):
+                        raise TypeError(
+                                "Use typing.List instead of [] or list for "
+                                "annotated types. Nested types in [] will not "
+                                "be checked.")
+                    try:
+                        typeguard.check_type(k, v, t)
+                    except TypeError:
+                        raise TypeError(
+                                "({}:{}) is not a value "
+                                "of annotated type {}".format(k,
+                                    json_loaded_object[k], t))
 
         if hasattr(json_loaded_object, dict.items.__name__):
             # we're in a dict, let's set attributes
             new_obj = super(JSONWrapper, cls).__new__(cls)
             for k, v in json_loaded_object.items():
                 if annotations and k in cls.__annotations__:
-                    # Recursive case
+                    # Recursive Wrapper case, we want to set the
+                    # same parameters as requested by user.
                     if hasattr(cls, '__annotations__'):
                         type_a = cls.__annotations__[k]
-                        if issubclass(type_a, JSONWrapper):
-                            setattr(new_obj, k, type_a(v))
-                            #setattr(new_obj, k, JSONWrapperStrict(v,))
-                            continue
+                        try:
+                            if issubclass(type_a, JSONWrapper):
+                            #typeguard.check_type(k, type_a, JSONWrapper)
+                                setattr(new_obj, k, type_a(v))
+                                # Successfully set, skip to next attribute.
+                                continue
+                        except TypeError:
+                            # type_a is not a JSONWrapper Child,
+                            # use generic case below.
+                            pass
+
                 # Generic case
                 setattr(new_obj, k,
+                        # In default case, we want to use the same parameter
+                        # for child as parent.
                         JSONWrapper(v,
                             annotations=annotations,
                             annotations_type=annotations_type,
@@ -254,27 +253,14 @@ class JSONWrapper:
             return json_loaded_object
 
     def __eq__(self, other):
-        if hasattr(other, '__dict__'):
-            return self.__dict__ == other.__dict__
-        elif isinstance(other, dict):
+        if isinstance(other, dict):
             return self.__dict__ == other
-        try:
-            # Maybe it's dict like, manual implementation of dict comparison.
-            if len(self.__dict__) != len(other):
-                return False
-            else:
-                for k, v in other.items():
-                    if k not in self.__dict__:
-                        return False
-                    if v != self.__dict__.get(k):
-                        return False
-                return True
-        except AttributeError:
-            pass
+        elif hasattr(other, '__dict__'):
+            return self.__dict__ == other.__dict__
         raise TypeError(f"JSONDictWrapper can't compare to {type(other)}")
 
-    def __neq__(self, other):
-        return not self.__eq__(other)
+    #def __ne__(self, other):
+    #    return not self.__eq__(other)
 
     def __len__(self):
         return len(self.__dict__)
@@ -295,6 +281,7 @@ JSONWrapperTypeStrict = wrapper_factory(
 JSONWrapperType = wrapper_factory(annotations_type=True)
 
 JSONWrapperStrict = wrapper_factory(annotations_strict=True)
+
 
 __all__ = [
     JSONclass.__name__,
