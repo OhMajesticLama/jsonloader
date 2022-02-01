@@ -1,23 +1,24 @@
 """
 This module is for you if you're tired of writing boilerplate that:
-- build a straightforward Python object from loaded JSON.  
-- checks that your input-loaded-JSON has all necessary attributes for your pipeline.
+- build a straightforward Python object from loaded JSON.
+- checks that your input-loaded-JSON has all necessary attributes for your
+  pipeline.
 - checks that your input JSON has the right types.
 """
-import itertools
 import functools
-from typing import Union, List, Any
+from typing import Union
 
 import typeguard
 
 TYPING_JSON_LOADED = Union[dict, list, int, str, float, bool]
 
 
-def JSONclass(cls=None,
+def JSONclass(
+        cls=None,
         *,
-        annotations : bool = False,
-        annotations_strict : bool = False,
-        annotations_type : bool = False):
+        annotations: bool = False,
+        annotations_strict: bool = False,
+        annotations_type: bool = False):
     """
     >>> from jsonloader import JSONclass
     >>> # By default we don't check for anything, we just build the object
@@ -37,8 +38,8 @@ def JSONclass(cls=None,
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
     >>> @JSONclass(annotations=True)
     ... class Example:
-    ...     a : str
-    ...     d : int
+    ...     a: str
+    ...     d: int
     ...
     >>> try:
     ...     example = Example(data)
@@ -54,8 +55,8 @@ def JSONclass(cls=None,
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
     >>> @JSONclass(annotations=True, annotations_strict=True)
     ... class Example:
-    ...     a : str
-    ...     b : int
+    ...     a: str
+    ...     b: int
     ...
     >>> try:
     ...     example = Example(data)
@@ -69,24 +70,27 @@ def JSONclass(cls=None,
     >>> # We want to ensure we have only annotated parameters and they
     >>> # are of annotated type.
     >>> data = {'a': 'aa', 'b': 'bb'}
-    >>> @JSONclass(annotations=True, annotations_strict=True, annotations_type=True)
+    >>> @JSONclass(annotations_strict=True, annotations_type=True)
+    ...
     ... class Example:
-    ...     a : str
-    ...     b : int
+    ...     a: str
+    ...     b: int
     ...
     >>> try:
     ...     example = Example(data)
     ... except TypeError:
-    ...     print("error - b is int")
+    ...     print("error - b is not int")
     ...
-    error - b is int
+    error - b is not int
     """
     def decorator(cls):
         custom_jsonwrapper = wrapper_factory(
             annotations=annotations,
             annotations_strict=annotations_strict,
             annotations_type=annotations_type)
-        class CustomJSONWrapper(custom_jsonwrapper, cls): pass
+
+        class CustomJSONWrapper(custom_jsonwrapper, cls):
+            pass
         return CustomJSONWrapper
 
     if cls is None:
@@ -97,17 +101,18 @@ def JSONclass(cls=None,
 
 
 @functools.lru_cache(maxsize=None)
-def wrapper_factory(*,
-        annotations : bool = False,
-        annotations_strict : bool = False,
-        annotations_type : bool = False):
+def wrapper_factory(
+        *,
+        annotations: bool = False,
+        annotations_strict: bool = False,
+        annotations_type: bool = False):
     """
     Internal class to generate special cases of JSONWrapper if needed.
     """
     if (not annotations
-        and not annotations_strict 
-        and not annotations_type):
-            return JSONWrapper
+            and not annotations_strict
+            and not annotations_type):
+        return JSONWrapper
 
     name_suffix = ''
     if annotations_type:
@@ -121,41 +126,46 @@ def wrapper_factory(*,
     doc = """
         This is a helper that makes:
             >>> class Foo(JSONWrapper{name_suffix}):
-            ...     foo : int
+            ...     foo: int
             ...
             >>> Foo({{'foo': 1}})
+            {{'foo': 1}}
 
         equivalent to:
             >>> class Foo(JSONWrapper):
-            ...     foo : int
+            ...     foo: int
             ...
             >>> Foo({{'foo': 1}},
-            ...     annotations={annotations}
+            ...     annotations={annotations},
             ...     annotations_type={annotations_type},
             ...     annotations_strict={annotations_strict})
+            ...
+            {{'foo': 1}}
 
     """.format(
             name_suffix=name_suffix,
             annotations=annotations,
-            annotations_type=annotations_type, 
+            annotations_type=annotations_type,
             annotations_strict=annotations_strict)
 
-    newclass.__new__ = functools.partial(newclass.__new__,
+    newclass.__new__ = functools.partial(
+            newclass.__new__,
             annotations=annotations,
             annotations_strict=annotations_strict,
             annotations_type=annotations_type)
+    newclass.__doc__ = doc
     return newclass
 
 
 class JSONWrapper:
     def __new__(cls,
-            json_loaded_object : TYPING_JSON_LOADED = None,
-            *,
-            annotations : bool = False,
-            annotations_strict : bool = False,
-            annotations_type : bool = False):
+                json_loaded_object: TYPING_JSON_LOADED = None,
+                *,
+                annotations: bool = False,
+                annotations_strict: bool = False,
+                annotations_type: bool = False):
         """
-        >>> # JSON object should be loaded JSON (e.g. with json standard module).
+        >>> # JSON object should be loaded JSON (e.g. with json standard).
         >>> json_obj = {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
         >>> wrapper = JSONWrapper(json_obj)
         >>> vars(wrapper)
@@ -166,8 +176,9 @@ class JSONWrapper:
         {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
         """
         annotations = (annotations
-                or annotations_type
-                or annotations_strict)
+                       or annotations_type
+                       or annotations_strict)
+
         if not hasattr(cls, '__annotations__'):
             # There is nothing to check, don't provoke failure.
             annotations = False
@@ -188,7 +199,7 @@ class JSONWrapper:
                 # We want strict overlap between annotations and JSON object.
                 raise KeyError(
                     "({}) JSON keys not found in annotations ({})".format(
-                    keys_j.difference(keys_a),  keys_a
+                        keys_j.difference(keys_a),  keys_a
                     ))
 
         if (annotations_type
@@ -197,20 +208,14 @@ class JSONWrapper:
             for k, v in json_loaded_object.items():
                 if k in cls.__annotations__:
                     # Let coverage to annotations and annotations_strict checks
-                    # Just check that when we have data here it is expected type
+                    # Here we just check that received data is of expected type
                     t = cls.__annotations__[k]
                     if isinstance(t, list):
                         raise TypeError(
                                 "Use typing.List instead of [] or list for "
                                 "annotated types. Nested types in [] will not "
                                 "be checked.")
-                    try:
-                        typeguard.check_type(k, v, t)
-                    except TypeError:
-                        raise TypeError(
-                                "({}:{}) is not a value "
-                                "of annotated type {}".format(k,
-                                    json_loaded_object[k], t))
+                    typeguard.check_type('{}: {}'.format(k, v), v, t)
 
         if hasattr(json_loaded_object, dict.items.__name__):
             # we're in a dict, let's set attributes
@@ -223,7 +228,6 @@ class JSONWrapper:
                         type_a = cls.__annotations__[k]
                         try:
                             if issubclass(type_a, JSONWrapper):
-                            #typeguard.check_type(k, type_a, JSONWrapper)
                                 setattr(new_obj, k, type_a(v))
                                 # Successfully set, skip to next attribute.
                                 continue
@@ -236,7 +240,8 @@ class JSONWrapper:
                 setattr(new_obj, k,
                         # In default case, we want to use the same parameter
                         # for child as parent.
-                        JSONWrapper(v,
+                        JSONWrapper(
+                            v,
                             annotations=annotations,
                             annotations_type=annotations_type,
                             annotations_strict=annotations_strict))
@@ -244,7 +249,8 @@ class JSONWrapper:
         elif (hasattr(json_loaded_object, list.__iter__.__name__)
                 and hasattr(json_loaded_object, list.clear.__name__)):
             # We have a list-like object and not a string
-            return [JSONWrapper(v,
+            return [JSONWrapper(
+                v,
                 annotations=annotations,
                 annotations_type=annotations_type,
                 annotations_strict=annotations_strict)
@@ -259,12 +265,9 @@ class JSONWrapper:
             return self.__dict__ == other.__dict__
         raise TypeError(f"JSONDictWrapper can't compare to {type(other)}")
 
-    #def __ne__(self, other):
-    #    return not self.__eq__(other)
-
     def __len__(self):
         return len(self.__dict__)
-    
+
     def __str__(self):
         return str(self.__dict__)
 
@@ -291,4 +294,3 @@ __all__ = [
     JSONWrapperTypeStrict.__name__,
     JSONWrapperStrict.__name__
         ]
-

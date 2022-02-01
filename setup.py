@@ -1,15 +1,16 @@
 """
 setup file for degiroasync
 """
-import sys
 import os
 
-import setuptools
+import setuptools  # type: ignore
 
 
 if __name__ == '__main__':
 
-    description_short = "No more boilerplate to check and build a Python object from JSON."
+    description_short = (
+            "No more boilerplate to check and build a Python object from "
+            "JSON.")
 
     readme_path = os.path.join(os.path.dirname(__file__), 'README.md')
     with open(readme_path, "r") as fh:
@@ -17,7 +18,7 @@ if __name__ == '__main__':
 
     setuptools.setup(
         name="jsonloader",
-        version="0.4.2",
+        version="0.4.3",
         author_email="ohmajesticlama@gmail.com",
         description=description_short,
         long_description=long_description,
@@ -35,7 +36,8 @@ if __name__ == '__main__':
                 'coverage >= 6.3',
                 'build >= 0.7.0',
                 'ipython >= 8.0.1',
-                'ipdb >= 0.13.9'
+                'ipdb >= 0.13.9',
+                'flake8 >= 4.0.1'
                 ]
             },
         classifiers=[
@@ -46,4 +48,3 @@ if __name__ == '__main__':
         test_suite='nose2.collector',
         tests_require=['nose2']
     )
-

@@ -1,24 +1,18 @@
 import unittest
-import logging
-import os
 import typing
 
 
-import jsonloader
 from jsonloader import JSONWrapper, JSONclass
 from jsonloader import JSONWrapperAnnotations
-from jsonloader import JSONWrapperTypeStrict
 from jsonloader import JSONWrapperStrict
 from jsonloader import JSONWrapperType
 
-
-LOGGER = logging.getLogger()
 
 class TestJSONclass(unittest.TestCase):
     def test_JSONclass(self):
         @JSONclass
         class Dummy:
-            foo : str
+            foo: str
 
         json_obj = {'foo': 'bar', 'key2': 12.3, 'key3': 4}
         wrapper = Dummy(json_obj)
@@ -46,8 +40,9 @@ class TestJSONWrapper(unittest.TestCase):
 
         for k, v in json_obj.items():
             self.assertTrue(hasattr(wrapper, k))
-            self.assertEqual(getattr(wrapper, k), v, f'Error (k, v) ({k}, {v})')
-
+            self.assertEqual(
+                    getattr(wrapper, k), v,
+                    f'Error (k, v) ({k}, {v})')
 
     def test_json_to_obj_str(self):
         json_obj = {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
@@ -56,8 +51,8 @@ class TestJSONWrapper(unittest.TestCase):
 
     def test_annotation_base(self):
         class Child(JSONWrapper):
-            a : str
-            b : int
+            a: str
+            b: int
 
         json_obj = {'a': 'aaa', 'b': 1}
         wrapped = Child(json_obj)
@@ -66,21 +61,22 @@ class TestJSONWrapper(unittest.TestCase):
 
     def test_annotation_fail(self):
         class Child(JSONWrapperAnnotations):
-            a : str
-            b : int
-            c : str
+            a: str
+            b: int
+            c: str
 
         json_obj = {'a': 'aaa', 'b': 1}
         with self.assertRaises(KeyError):
-            wrapped = Child(json_obj)
+            Child(json_obj)
 
     def test_annotation_recursive(self):
         class Child(JSONWrapperAnnotations):
-            a : str
-            b : int
+            a: str
+            b: int
+
             class Bar(JSONWrapperAnnotations):
-                bar_key : str
-            c : Bar
+                bar_key: str
+            c: Bar
 
         json_obj = {'a': 'aaa', 'b': 1, 'c': {'bar_key': 'foo'}}
         wrapped = Child(json_obj)
@@ -90,25 +86,26 @@ class TestJSONWrapper(unittest.TestCase):
 
     def test_annotation_recursive_fail(self):
         class Child(JSONWrapperAnnotations):
-            a : str
-            b : int
+            a: str
+            b: int
+
             class Bar(JSONWrapperAnnotations):
-                bar_key : str
-            c : Bar
+                bar_key: str
+            c: Bar
 
         json_obj = {'a': 'aaa', 'b': 1, 'c': {'bar_key_error': 'foo'}}
         with self.assertRaises(KeyError):
             # This should not be accepted as there is an error in bar_key
-            child = Child(json_obj)
+            Child(json_obj)
 
     def test_annotation_strict(self):
         class Child(JSONWrapperStrict):
-            a : str
-            b : int
+            a: str
+            b: int
 
         json_obj = {'a': 'aaa', 'b': 1, 'c': 4}
         with self.assertRaises(KeyError):
-            wrapped = Child(json_obj)
+            Child(json_obj)
 
     def test_list_child(self):
         class Child(JSONWrapper):
@@ -134,7 +131,7 @@ class TestJSONWrapper(unittest.TestCase):
 
         json_obj = {'a': 'aaa', 'b': 1, 'c': [1, 2, 3]}
         with self.assertRaises(TypeError):
-            child = Child(json_obj)
+            Child(json_obj)
 
     def test_list_child_type_dont_use_list(self):
         class Child(JSONWrapperType):
@@ -142,7 +139,7 @@ class TestJSONWrapper(unittest.TestCase):
 
         json_obj = {'a': 'aaa', 'b': 1, 'c': [1, 2, 3]}
         with self.assertRaises(TypeError):
-            child = Child(json_obj)
+            Child(json_obj)
 
     def test_operator_equal_dict(self):
         json_obj = {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
@@ -172,4 +169,3 @@ class TestJSONWrapper(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

@@ -69,17 +69,18 @@ error - extra 'c'
 >>> try:
 ...     example = Example(data)
 ... except TypeError:
-...     print("error - b is int")
+...     print("error - b is not int")
 ...
-error - b is int
+error - b is not int
 ```
 
 ## Install
 
 ### User installation
 ```
-python3 -m virtualenv venv
-. venv/bin/activate
+# Recommendation: install jsonloader in your project virtualenv
+# Should you not want to use virtualenv or equivalent, it's recommended to use
+# '--user' pip option to avoid a system-level install.
 pip3 install jsonloader
 ```
 
@@ -87,7 +88,7 @@ pip3 install jsonloader
 
 Github repository currently points to latest development version. Please
 jump to latest released version tag if you intend to work on PyPI version.
-For example `git checkout tags/0.4.2`.
+For example `git checkout tags/v0.4.3`.
 
 ```
 python3 -m virtualenv venv
