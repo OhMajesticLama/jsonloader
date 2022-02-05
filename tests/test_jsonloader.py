@@ -173,6 +173,16 @@ class TestJSONWrapper(unittest.TestCase):
 
         self.assertEqual(len(wrapper), len(json_obj))
 
+    def test_default_value(self):
+        json_obj = {'foo': 'bar', 'key3': {'key4': 4}}
+
+        class Child(JSONWrapperType):
+            foo: str
+            key2: int = 1
+
+        child = Child(json_obj)
+        self.assertEqual(child.key2, 1)
+
 
 if __name__ == '__main__':
     unittest.main()

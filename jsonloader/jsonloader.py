@@ -34,6 +34,7 @@ def JSONclass(
     >>> example.b
     'bb'
     >>>
+    >>> ######################################################################
     >>> # We want to ensure we have annotated parameters
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
     >>> @JSONclass(annotations=True)
@@ -50,7 +51,7 @@ def JSONclass(
     >>> data['d'] = 1  # Let's fix the missing data
     >>> example = Example(data)  # No more error in loading.
     >>>
-    >>>
+    >>> ######################################################################
     >>> # We want to ensure we have *only* annotated parameters
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
     >>> @JSONclass(annotations=True, annotations_strict=True)
@@ -67,11 +68,11 @@ def JSONclass(
     >>> del data['c']  # Let's remove unwanted data
     >>> example = Example(data)  # No more error in loading.
     >>>
+    >>> ######################################################################
     >>> # We want to ensure we have only annotated parameters and they
     >>> # are of annotated type.
     >>> data = {'a': 'aa', 'b': 'bb'}
     >>> @JSONclass(annotations_strict=True, annotations_type=True)
-    ...
     ... class Example:
     ...     a: str
     ...     b: int
@@ -82,6 +83,18 @@ def JSONclass(
     ...     print("error - b is not int")
     ...
     error - b is not int
+    >>>
+    >>> ######################################################################
+    >>> # Default values are supported too.
+    >>> data = {'a': 'aa'}
+    >>> @JSONclass(annotations_strict=True, annotations_type=True)
+    ... class Example:
+    ...     a: str
+    ...     b: int = 1
+    ...
+    >>> example = Example(data)
+    >>> example.b
+    1
     """
     def decorator(cls):
         custom_jsonwrapper = wrapper_factory(
@@ -132,6 +145,19 @@ class JSONWrapper:
             # dict-like object + check_keys request
             keys_a = set(cls.__annotations__.keys())
             keys_j = set(json_loaded_object.keys())
+
+            for k, t in cls.__annotations__.items():
+                if hasattr(cls, k):
+                    # A default value has been set by user
+                    # a. Check consistent default type with annotation
+                    if annotations_type:
+                        typeguard.check_type(
+                                '{}: default of {}'.format(k, getattr(cls, k)),
+                                getattr(cls, k), t)
+
+                    # b. Discard key from keys availability in loaded object.
+                    keys_a.discard(k)
+                    keys_j.discard(k)
 
             if not keys_a.issubset(keys_j):
                 raise KeyError("({}) annotated keys not found in ({})".format(
