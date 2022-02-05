@@ -1,5 +1,6 @@
 import unittest
 import typing
+import json
 
 
 from jsonloader import JSONWrapper, JSONclass
@@ -151,6 +152,12 @@ class TestJSONWrapper(unittest.TestCase):
         wrapper = JSONWrapper(json_obj)
         wrapper2 = JSONWrapper(json_obj)
         self.assertEqual(wrapper, wrapper2)
+
+    def test_operator_nequal_other(self):
+        json_obj = {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
+        wrapper = JSONWrapper(json_obj)
+        self.assertNotEqual(wrapper, None)
+        self.assertNotEqual(wrapper, 1)
 
     def test_operator_nequal(self):
         json_obj = {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}

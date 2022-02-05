@@ -6,7 +6,7 @@ This module is for you if you're tired of writing boilerplate that:
 - checks that your input JSON has the right types.
 """
 import functools
-from typing import Union
+from typing import Union, Any
 
 import typeguard
 
@@ -100,70 +100,13 @@ def JSONclass(
         return decorator(cls)
 
 
-@functools.lru_cache(maxsize=None)
-def wrapper_factory(
-        *,
-        annotations: bool = False,
-        annotations_strict: bool = False,
-        annotations_type: bool = False):
-    """
-    Internal class to generate special cases of JSONWrapper if needed.
-    """
-    if (not annotations
-            and not annotations_strict
-            and not annotations_type):
-        return JSONWrapper
-
-    name_suffix = ''
-    if annotations_type:
-        name_suffix += 'Type'
-    if annotations_strict:
-        name_suffix += 'Strict'
-    if not len(name_suffix) and annotations:
-        name_suffix += 'Annotations'
-    newclass = type(f'JSONWrapper{name_suffix}', (JSONWrapper,), {})
-
-    doc = """
-        This is a helper that makes:
-            >>> class Foo(JSONWrapper{name_suffix}):
-            ...     foo: int
-            ...
-            >>> Foo({{'foo': 1}})
-            {{'foo': 1}}
-
-        equivalent to:
-            >>> class Foo(JSONWrapper):
-            ...     foo: int
-            ...
-            >>> Foo({{'foo': 1}},
-            ...     annotations={annotations},
-            ...     annotations_type={annotations_type},
-            ...     annotations_strict={annotations_strict})
-            ...
-            {{'foo': 1}}
-
-    """.format(
-            name_suffix=name_suffix,
-            annotations=annotations,
-            annotations_type=annotations_type,
-            annotations_strict=annotations_strict)
-
-    newclass.__new__ = functools.partial(
-            newclass.__new__,
-            annotations=annotations,
-            annotations_strict=annotations_strict,
-            annotations_type=annotations_type)
-    newclass.__doc__ = doc
-    return newclass
-
-
 class JSONWrapper:
     def __new__(cls,
                 json_loaded_object: TYPING_JSON_LOADED = None,
                 *,
                 annotations: bool = False,
                 annotations_strict: bool = False,
-                annotations_type: bool = False):
+                annotations_type: bool = False) -> Any:
         """
         >>> # JSON object should be loaded JSON (e.g. with json standard).
         >>> json_obj = {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
@@ -263,7 +206,11 @@ class JSONWrapper:
             return self.__dict__ == other
         elif hasattr(other, '__dict__'):
             return self.__dict__ == other.__dict__
-        raise TypeError(f"JSONDictWrapper can't compare to {type(other)}")
+        try:
+            return self.__dict__ == other
+        except Exception as exc:
+            raise TypeError(f"{self.__class__.__name__} can't compare to "
+                            "{type(other)}") from exc
 
     def __len__(self):
         return len(self.__dict__)
@@ -273,6 +220,63 @@ class JSONWrapper:
 
     def __repr__(self):
         return repr(self.__dict__)
+
+
+@functools.lru_cache(maxsize=None)
+def wrapper_factory(
+        *,
+        annotations: bool = False,
+        annotations_strict: bool = False,
+        annotations_type: bool = False) -> JSONWrapper:
+    """
+    Internal class to generate special cases of JSONWrapper if needed.
+    """
+    if (not annotations
+            and not annotations_strict
+            and not annotations_type):
+        return JSONWrapper
+
+    name_suffix = ''
+    if annotations_type:
+        name_suffix += 'Type'
+    if annotations_strict:
+        name_suffix += 'Strict'
+    if not len(name_suffix) and annotations:
+        name_suffix += 'Annotations'
+    newclass = type(f'JSONWrapper{name_suffix}', (JSONWrapper,), {})
+
+    doc = """
+        This is a helper that makes:
+            >>> class Foo(JSONWrapper{name_suffix}):
+            ...     foo: int
+            ...
+            >>> Foo({{'foo': 1}})
+            {{'foo': 1}}
+
+        equivalent to:
+            >>> class Foo(JSONWrapper):
+            ...     foo: int
+            ...
+            >>> Foo({{'foo': 1}},
+            ...     annotations={annotations},
+            ...     annotations_type={annotations_type},
+            ...     annotations_strict={annotations_strict})
+            ...
+            {{'foo': 1}}
+
+    """.format(
+            name_suffix=name_suffix,
+            annotations=annotations,
+            annotations_type=annotations_type,
+            annotations_strict=annotations_strict)
+
+    newclass.__new__ = functools.partial(
+            newclass.__new__,
+            annotations=annotations,
+            annotations_strict=annotations_strict,
+            annotations_type=annotations_type)
+    newclass.__doc__ = doc
+    return newclass
 
 
 JSONWrapperAnnotations = wrapper_factory(annotations=True)

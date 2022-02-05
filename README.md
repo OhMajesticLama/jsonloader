@@ -1,4 +1,5 @@
 # JSONloader
+[![Downloads](https://pepy.tech/badge/jsonloader)](https://pepy.tech/project/jsonloader)
 
 This module is for you if you're tired of writing boilerplate that:
 - builds a straightforward Python object from loaded JSON.  
