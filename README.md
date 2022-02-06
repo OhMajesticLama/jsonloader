@@ -1,6 +1,6 @@
 # JSONloader
 [![Downloads](https://pepy.tech/badge/jsonloader)](https://pepy.tech/project/jsonloader)
-[![CI](https://github.com/kribou/jsonloader/actions/workflows/python-package.yml/badge.svg)](https://github.com/kribou/jsonloader/actions/workflows/python-package.yml)
+[![CI](https://github.com/kribou/jsonloader/actions/workflows/lint-and-tests.yml/badge.svg)](https://github.com/kribou/jsonloader/actions/workflows/lint-and-tests.yml)
 
 This module is for you if you're tired of writing boilerplate that:
 - builds a straightforward Python object from loaded JSON or similar dict-based
