@@ -102,8 +102,10 @@ def JSONclass(
             annotations_strict=annotations_strict,
             annotations_type=annotations_type)
 
+        # Set cls in second to allow overwride of custom_json_wrapper
         class CustomJSONWrapper(custom_jsonwrapper, cls):
             pass
+        CustomJSONWrapper.__name__ = cls.__name__
         return CustomJSONWrapper
 
     if cls is None:
