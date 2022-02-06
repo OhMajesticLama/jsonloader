@@ -1,5 +1,6 @@
 # JSONloader
 [![Downloads](https://pepy.tech/badge/jsonloader)](https://pepy.tech/project/jsonloader)
+[![CI](https://github.com/kribou/jsonloader/actions/workflows/python-package.yml/badge.svg)](https://github.com/kribou/jsonloader/actions/workflows/python-package.yml)
 
 This module is for you if you're tired of writing boilerplate that:
 - builds a straightforward Python object from loaded JSON or similar dict-based
@@ -121,7 +122,7 @@ nose2 -t . --with-doctest
 ```
 
 ### Tests coverage
-For example, leverage `coverage` module: `nose2 -t . -C --coverage-report html` 
+For example, leverage `coverage` module: `nose2 -t . -C --coverage-report html`
 
 
 
