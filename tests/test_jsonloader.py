@@ -22,6 +22,17 @@ class TestJSONclass(unittest.TestCase):
             self.assertTrue(hasattr(wrapper, k))
             self.assertEqual(getattr(wrapper, k), v)
 
+    def test_name(self):
+        @JSONclass
+        class Dummy:
+            foo: str
+            bar: int
+
+        json_obj = {'foo': 'a', 'bar': 1}
+
+        dummy = Dummy(json_obj)
+        self.assertTrue(dummy.__class__.__name__, 'Dummy')
+
 
 class TestJSONWrapper(unittest.TestCase):
     def test_json_to_obj_flat(self):
@@ -44,10 +55,10 @@ class TestJSONWrapper(unittest.TestCase):
                     getattr(wrapper, k), v,
                     f'Error (k, v) ({k}, {v})')
 
-    def test_json_to_obj_str(self):
-        json_obj = {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
+    def test_json_to_str(self):
+        json_obj = {'foo': 'bar', 'key2': 12.3, }
         wrapper = JSONWrapper(json_obj)
-        self.assertEqual(str(wrapper), str(json_obj))
+        self.assertEqual(str(wrapper), '<JSONWrapper: {}>'.format(str(json_obj)))
 
     def test_annotation_base(self):
         class Child(JSONWrapper):
@@ -181,6 +192,7 @@ class TestJSONWrapper(unittest.TestCase):
 
         child = Child(json_obj)
         self.assertEqual(child.key2, 1)
+    
 
 
 if __name__ == '__main__':

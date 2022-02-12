@@ -50,7 +50,8 @@ def JSONclass(
     error - missing 'd'
     >>> data['d'] = 1  # Let's fix the missing data
     >>> example = Example(data)  # No more error in loading.
-    >>>
+
+    >>> from jsonloader import JSONclass
     >>> ######################################################################
     >>> # We want to ensure we have *only* annotated parameters
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
@@ -67,7 +68,8 @@ def JSONclass(
     error - extra 'c'
     >>> del data['c']  # Let's remove unwanted data
     >>> example = Example(data)  # No more error in loading.
-    >>>
+
+    >>> from jsonloader import JSONclass
     >>> ######################################################################
     >>> # We want to ensure we have only annotated parameters and they
     >>> # are of annotated type.
@@ -83,7 +85,8 @@ def JSONclass(
     ...     print("error - b is not int")
     ...
     error - b is not int
-    >>>
+
+    >>> from jsonloader import JSONclass
     >>> ######################################################################
     >>> # Default values are supported too.
     >>> data = {'a': 'aa'}
@@ -127,11 +130,11 @@ class JSONWrapper:
         >>> json_obj = {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
         >>> wrapper = JSONWrapper(json_obj)
         >>> vars(wrapper)
-        {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
+        {'foo': 'bar', 'key2': 12.3, 'key3': '<JSONWrapper: {'key4': 4}>'}
         >>> wrapper.foo
         'bar'
         >>> wrapper
-        {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
+        '<JSONWrapper: {'foo': 'bar', 'key2': 12.3, 'key3': '<JSONWrapper: {'key4': 4}>'}>'
         """
         annotations = (annotations
                        or annotations_type
@@ -244,10 +247,10 @@ class JSONWrapper:
         return len(self.__dict__)
 
     def __str__(self):
-        return str(self.__dict__)
+        return "<{}: {}>".format(self.__class__.__name__, str(self.__dict__))
 
     def __repr__(self):
-        return repr(self.__dict__)
+        return "'{}'".format(self.__str__())
 
 
 @functools.lru_cache(maxsize=None)
@@ -279,7 +282,7 @@ def wrapper_factory(
             ...     foo: int
             ...
             >>> Foo({{'foo': 1}})
-            {{'foo': 1}}
+            '<Foo: {{'foo': 1}}>'
 
         equivalent to:
             >>> class Foo(JSONWrapper):
@@ -290,7 +293,7 @@ def wrapper_factory(
             ...     annotations_type={annotations_type},
             ...     annotations_strict={annotations_strict})
             ...
-            {{'foo': 1}}
+            '<Foo: {{'foo': 1}}>'
 
     """.format(
             name_suffix=name_suffix,
