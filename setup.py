@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     setuptools.setup(
         name="jsonloader",
-        version="0.5.0",
+        version="0.5.1",
         author_email="ohmajesticlama@gmail.com",
         description=description_short,
         long_description=long_description,
@@ -42,8 +42,12 @@ if __name__ == '__main__':
             },
         classifiers=[
             "Programming Language :: Python :: 3",
+            "Development Status :: 4 - Beta",
             "License :: OSI Approved :: MIT License",
             "Operating System :: OS Independent",
+            "Environment :: Web Environment",
+            "Intended Audience :: Developers",
+            "Topic :: Software Development :: Libraries :: Python Modules"
         ],
         test_suite='nose2.collector',
         tests_require=['nose2']

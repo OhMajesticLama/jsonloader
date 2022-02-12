@@ -1,6 +1,5 @@
 import unittest
 import typing
-import json
 
 
 from jsonloader import JSONWrapper, JSONclass
