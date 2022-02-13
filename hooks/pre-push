@@ -1,4 +1,8 @@
 #!/bin/sh
 
-echo "Running the tests before pushing..."
+echo "Linting..."
+flake8 . --select=E9,F63,F7,F82 --show-source --statistics --exclude venv/
+echo "Linting...OK"
+
+echo "Running the tests..."
 pytest --doctest-modules
