@@ -109,13 +109,14 @@ jump to latest released version tag if you intend to work on PyPI version.
 For example `git checkout tags/v0.4.3`.
 
 ```
+# These commands assume virtualenv is installed
 python3 -m virtualenv venv
 . venv/bin/activate
-pip3 install -e '.[dev]'
-```
 
-To setup the project's git hooks:
-```
+# Actually install the deps
+pip3 install -e '.[dev]'
+
+# To setup the project's git hooks:
 git config --local core.hooksPath hook
 ```
 
