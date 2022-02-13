@@ -114,6 +114,11 @@ python3 -m virtualenv venv
 pip3 install -e '.[dev]'
 ```
 
+To setup the project's git hooks:
+```
+git config --local core.hooksPath hook
+```
+
 ## Run Tests
 
 ```
