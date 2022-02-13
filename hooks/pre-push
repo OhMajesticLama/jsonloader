@@ -1,6 +1,4 @@
 #!/bin/sh
 
 echo "Running the tests before pushing..."
-
-# TODO: also run doctests
-nose2 -t .
+pytest --doctest-modules

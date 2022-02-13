@@ -31,7 +31,7 @@ if __name__ == '__main__':
             ],
         extras_require={
             'dev': [
-                'nose2 >= 0.10.0',
+                'pytest >= 7.0.1',
                 'mypy >= 0.931',
                 'coverage >= 6.3',
                 'build >= 0.7.0',
@@ -49,6 +49,5 @@ if __name__ == '__main__':
             "Intended Audience :: Developers",
             "Topic :: Software Development :: Libraries :: Python Modules"
         ],
-        test_suite='nose2.collector',
-        tests_require=['nose2']
+        tests_require=['pytest'],
     )

@@ -123,11 +123,15 @@ git config --local core.hooksPath hook
 
 ```
 # From this repository top directory
-nose2 -t . --with-doctest
+pytest --doctest-modules
 ```
 
 ### Tests coverage
-For example, leverage `coverage` module: `nose2 -t . -C --coverage-report html`
+For example, leverage `coverage` module:
+```
+coverage run -m pytest --doctest-modules
+coverage html
+```
 
 
 
