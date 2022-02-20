@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     setuptools.setup(
         name="jsonloader",
-        version="0.6.0",
+        version="0.7.0",
         author_email="ohmajesticlama@gmail.com",
         description=description_short,
         long_description=long_description,

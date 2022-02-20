@@ -20,9 +20,9 @@ def JSONclass(
         annotations_strict: bool = False,
         annotations_type: bool = False):
     """
+    By default we don't check for anything, we just build the object
+    as we received it.
     >>> from jsonloader import JSONclass
-    >>> # By default we don't check for anything, we just build the object
-    >>> # as we received it.
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
     >>> @JSONclass
     ... class Example:
@@ -33,9 +33,9 @@ def JSONclass(
     'aa'
     >>> example.b
     'bb'
-    >>>
-    >>> ######################################################################
-    >>> # We want to ensure we have annotated parameters
+
+    We want to ensure we have annotated parameters
+    >>> from jsonloader import JSONclass
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
     >>> @JSONclass(annotations=True)
     ... class Example:
@@ -51,9 +51,8 @@ def JSONclass(
     >>> data['d'] = 1  # Let's fix the missing data
     >>> example = Example(data)  # No more error in loading.
 
+    We want to ensure we have *only* annotated parameters
     >>> from jsonloader import JSONclass
-    >>> ######################################################################
-    >>> # We want to ensure we have *only* annotated parameters
     >>> data = {'a': 'aa', 'b': 'bb', 'c': 1}
     >>> @JSONclass(annotations=True, annotations_strict=True)
     ... class Example:
@@ -69,10 +68,9 @@ def JSONclass(
     >>> del data['c']  # Let's remove unwanted data
     >>> example = Example(data)  # No more error in loading.
 
+    We want to ensure we have only annotated parameters and they
+    are of annotated type.
     >>> from jsonloader import JSONclass
-    >>> ######################################################################
-    >>> # We want to ensure we have only annotated parameters and they
-    >>> # are of annotated type.
     >>> data = {'a': 'aa', 'b': 'bb'}
     >>> @JSONclass(annotations_strict=True, annotations_type=True)
     ... class Example:
@@ -86,9 +84,8 @@ def JSONclass(
     ...
     error - b is not int
 
+    Default values are supported too.
     >>> from jsonloader import JSONclass
-    >>> ######################################################################
-    >>> # Default values are supported too.
     >>> data = {'a': 'aa'}
     >>> @JSONclass(annotations_strict=True, annotations_type=True)
     ... class Example:
@@ -98,6 +95,18 @@ def JSONclass(
     >>> example = Example(data)
     >>> example.b
     1
+
+    A JSONclass can be converted back to a dict, even for recursive
+    structures
+    >>> from jsonloader import JSONclass
+    >>> data = {'a': 'aa', 'b':2, 'c': {'foo': 'bar'}}
+    >>> @JSONclass(annotations_type=True, annotations=True)
+    ... class Example:
+    ...     a: str
+    ...     b: int
+    ...
+    >>> example = Example(data)
+    >>> assert dict(example) == data
     """
     def decorator(cls):
         custom_jsonwrapper = wrapper_factory(
@@ -127,18 +136,19 @@ class JSONWrapper:
                 annotations_type: bool = False) -> Any:
         """
         >>> # JSON object should be loaded JSON (e.g. with json standard).
-        >>> json_obj = {'foo': 'bar', 'key2': 12.3, 'key3': {'key4': 4}}
+        >>> json_obj = {'foo': 'bar', 'key3': {'key4': 4}}
         >>> wrapper = JSONWrapper(json_obj)
         >>> vars(wrapper)
-        {'foo': 'bar', 'key2': 12.3, 'key3': '<JSONWrapper: {'key4': 4}>'}
+        {'foo': 'bar', 'key3': '<JSONWrapper: {'key4': 4}>'}
         >>> wrapper.foo
         'bar'
         >>> wrapper
-        '<JSONWrapper: {'foo': 'bar', 'key2': 12.3, 'key3': '<JSONWrapper: {'key4': 4}>'}>'
+        '<JSONWrapper: {'foo': 'bar', 'key3': '<JSONWrapper: {'key4': 4}>'}>'
         """
         annotations = (annotations
                        or annotations_type
                        or annotations_strict)
+        default_attributes = {}
 
         if not hasattr(cls, '__annotations__'):
             # There is nothing to check, don't provoke failure.
@@ -163,6 +173,12 @@ class JSONWrapper:
                     # b. Discard key from keys availability in loaded object.
                     keys_a.discard(k)
                     keys_j.discard(k)
+
+                    # c. Store for setting to new instance when we instantiate
+                    # Note: This will have the same side effects for mutable
+                    # default values as for function parameters and class-level
+                    # defaults.
+                    default_attributes[k] = getattr(cls, k)
 
             if not keys_a.issubset(keys_j):
                 raise KeyError("({}) annotated keys not found in ({})".format(
@@ -194,6 +210,11 @@ class JSONWrapper:
         if hasattr(json_loaded_object, dict.items.__name__):
             # we're in a dict, let's set attributes
             new_obj = super(JSONWrapper, cls).__new__(cls)
+            for k, v in default_attributes.items():
+                if k not in json_loaded_object:
+                    # Attribute not passed as parameter and we have a default.
+                    # Set it.
+                    setattr(new_obj, k, v)
             for k, v in json_loaded_object.items():
                 if annotations and k in cls.__annotations__:
                     # Recursive Wrapper case, we want to set the
@@ -251,6 +272,18 @@ class JSONWrapper:
 
     def __repr__(self):
         return "'{}'".format(self.__str__())
+
+    def __iter__(self):
+        for k, v in self.__dict__.items():
+            if isinstance(v, JSONWrapper):
+                yield k, dict(v)
+            else:
+                yield k, v
+
+    def __getitem__(self, item: str) -> Any:
+        if not hasattr(self, item):
+            raise KeyError(item)
+        return getattr(self, item)
 
 
 @functools.lru_cache(maxsize=None)

@@ -1,11 +1,15 @@
 import unittest
 import typing
+import logging
 
 
 from jsonloader import JSONWrapper, JSONclass
 from jsonloader import JSONWrapperAnnotations
 from jsonloader import JSONWrapperStrict
 from jsonloader import JSONWrapperType
+
+
+LOGGER = logging.getLogger('jsonloader')
 
 
 class TestJSONclass(unittest.TestCase):
@@ -58,7 +62,8 @@ class TestJSONWrapper(unittest.TestCase):
     def test_json_to_str(self):
         json_obj = {'foo': 'bar', 'key2': 12.3, }
         wrapper = JSONWrapper(json_obj)
-        self.assertEqual(str(wrapper), '<JSONWrapper: {}>'.format(str(json_obj)))
+        self.assertEqual(str(wrapper),
+                         '<JSONWrapper: {}>'.format(str(json_obj)))
 
     def test_annotation_base(self):
         class Child(JSONWrapper):
@@ -192,7 +197,34 @@ class TestJSONWrapper(unittest.TestCase):
 
         child = Child(json_obj)
         self.assertEqual(child.key2, 1)
-    
+
+    def test_dict(self):
+        json_obj = {'foo': 'bar', 'key3': {'key4': 4}}
+
+        class Child(JSONWrapperType):
+            foo: str
+            key2: int = 1
+
+        child = Child(json_obj)
+        LOGGER.debug('test_dict| %s', child)
+        LOGGER.debug('test_dict dict| %s', dict(child))
+        self.assertEqual(dict(child), {'foo': 'bar',
+                                       'key2': 1,
+                                       'key3': {'key4': 4},
+                                       })
+
+    def test_iter(self):
+        json_obj = {'foo': 'bar', 'key3': {'key4': 4}}
+
+        class Child(JSONWrapperType):
+            foo: str
+            key2: int = 1
+
+        child = Child(json_obj)
+
+        keys = list(json_obj.keys()) + ['key2']
+        for k, v in child:
+            self.assertIn(k, keys)
 
 
 if __name__ == '__main__':
