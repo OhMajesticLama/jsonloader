@@ -109,6 +109,22 @@ def JSONclass(
     >>> assert dict(example) == data
     """
     def decorator(cls):
+        if issubclass(cls, JSONWrapper):
+            # cls is already a JSONWrapper
+            # We just want to update annotations default parameters
+
+            class Child(cls):
+                pass
+
+            Child.__name__ = cls.__name__
+            Child.__new__ = functools.wraps(cls.__new__)(functools.partial(
+                    cls.__new__,
+                    annotations=annotations,
+                    annotations_type=annotations_type,
+                    annotations_strict=annotations_strict))
+            return Child
+
+        # cls is not a JSONWrapper, build one.
         custom_jsonwrapper = wrapper_factory(
             annotations=annotations,
             annotations_strict=annotations_strict,
@@ -284,6 +300,9 @@ class JSONWrapper:
         if not hasattr(self, item):
             raise KeyError(item)
         return getattr(self, item)
+
+    def __contains__(self, item: str) -> bool:
+        return hasattr(self, item)
 
 
 @functools.lru_cache(maxsize=None)

@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     setuptools.setup(
         name="jsonloader",
-        version="0.7.0",
+        version="0.8.0",
         author_email="ohmajesticlama@gmail.com",
         description=description_short,
         long_description=long_description,
@@ -37,7 +37,8 @@ if __name__ == '__main__':
                 'build >= 0.7.0',
                 'ipython >= 8.0.1',
                 'ipdb >= 0.13.9',
-                'flake8 >= 4.0.1'
+                'flake8 >= 4.0.1',
+                'twine >= 3.8.0',
                 ]
             },
         classifiers=[

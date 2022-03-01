@@ -9,7 +9,7 @@ This module is for you if you're tired of writing boilerplate that:
 - checks that your input JSON has the right types.
 
 
-## Example
+## Examples
 Main intended usage is through the `JSONclass` decorator, example below:
 
 By default we don't check for anything, we just build the object

@@ -37,6 +37,40 @@ class TestJSONclass(unittest.TestCase):
         dummy = Dummy(json_obj)
         self.assertTrue(dummy.__class__.__name__, 'Dummy')
 
+    def test_child(self):
+        @JSONclass
+        class Dummy:
+            foo: str
+            bar: int
+
+        # Instantiating DummyChild should not raise an exception
+        @JSONclass
+        class DummyChild(Dummy):
+            foo: str
+            bar: int
+
+        json_obj = {'foo': 'a', 'bar': 1}
+
+        dummy = DummyChild(json_obj)
+        self.assertTrue(dummy.__class__.__name__, 'Dummy')
+
+    def test_child_params_overload(self):
+        @JSONclass
+        class Dummy:
+            foo: str
+            bar: int
+
+        # Instantiating DummyChild should not raise an exception
+        @JSONclass(annotations_type=True)
+        class DummyChild(Dummy):
+            foo: str
+            bar: int
+
+        json_obj = {'foo': 'a', 'bar': 'b'}
+
+        with self.assertRaises(TypeError):
+            DummyChild(json_obj)
+
 
 class TestJSONWrapper(unittest.TestCase):
     def test_json_to_obj_flat(self):
