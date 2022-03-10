@@ -113,28 +113,24 @@ def JSONclass(
             # cls is already a JSONWrapper
             # We just want to update annotations default parameters
 
-            class Child(cls):
-                pass
-
-            Child.__name__ = cls.__name__
-            Child.__new__ = functools.wraps(cls.__new__)(functools.partial(
+            cls.__new__ = functools.partial(
                     cls.__new__,
                     annotations=annotations,
                     annotations_type=annotations_type,
-                    annotations_strict=annotations_strict))
-            return Child
+                    annotations_strict=annotations_strict)
+            return cls
+        else:
+            # cls is not a JSONWrapper, build one.
+            custom_jsonwrapper = wrapper_factory(
+                annotations=annotations,
+                annotations_strict=annotations_strict,
+                annotations_type=annotations_type)
 
-        # cls is not a JSONWrapper, build one.
-        custom_jsonwrapper = wrapper_factory(
-            annotations=annotations,
-            annotations_strict=annotations_strict,
-            annotations_type=annotations_type)
-
-        # Set cls in second to allow overwride of custom_json_wrapper
-        class CustomJSONWrapper(custom_jsonwrapper, cls):
-            pass
-        CustomJSONWrapper.__name__ = cls.__name__
-        return CustomJSONWrapper
+            # Set cls in second to allow overwride of custom_json_wrapper
+            class CustomJSONWrapper(custom_jsonwrapper, cls):
+                pass
+            CustomJSONWrapper.__name__ = cls.__name__
+            return CustomJSONWrapper
 
     if cls is None:
         # We need to return a class decorator
