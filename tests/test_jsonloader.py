@@ -10,6 +10,7 @@ from jsonloader import JSONWrapperType
 
 
 LOGGER = logging.getLogger('jsonloader')
+LOGGER.setLevel(logging.DEBUG)
 
 
 class TestJSONclass(unittest.TestCase):
@@ -70,6 +71,15 @@ class TestJSONclass(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             DummyChild(json_obj)
+
+    def test_missing_annotation(self):
+        @JSONclass(annotations=True)
+        class Example:
+            a: str
+            d: int
+
+        with self.assertRaises(KeyError):
+            Example({'a': 'aa'})
 
 
 class TestJSONWrapper(unittest.TestCase):

@@ -6,9 +6,11 @@ This module is for you if you're tired of writing boilerplate that:
 - checks that your input JSON has the right types.
 """
 import functools
+import typing
 from typing import Union, Any
 
 import typeguard
+
 
 TYPING_JSON_LOADED = Union[dict, list, int, str, float, bool]
 
@@ -113,28 +115,24 @@ def JSONclass(
             # cls is already a JSONWrapper
             # We just want to update annotations default parameters
 
-            class Child(cls):
-                pass
-
-            Child.__name__ = cls.__name__
-            Child.__new__ = functools.wraps(cls.__new__)(functools.partial(
+            cls.__new__ = functools.partial(
                     cls.__new__,
                     annotations=annotations,
                     annotations_type=annotations_type,
-                    annotations_strict=annotations_strict))
-            return Child
+                    annotations_strict=annotations_strict)
+            return cls
+        else:
+            # cls is not a JSONWrapper, build one.
+            custom_jsonwrapper = wrapper_factory(
+                annotations=annotations,
+                annotations_strict=annotations_strict,
+                annotations_type=annotations_type)
 
-        # cls is not a JSONWrapper, build one.
-        custom_jsonwrapper = wrapper_factory(
-            annotations=annotations,
-            annotations_strict=annotations_strict,
-            annotations_type=annotations_type)
-
-        # Set cls in second to allow overwride of custom_json_wrapper
-        class CustomJSONWrapper(custom_jsonwrapper, cls):
-            pass
-        CustomJSONWrapper.__name__ = cls.__name__
-        return CustomJSONWrapper
+            # Set cls in second to allow overwride of custom_json_wrapper
+            class CustomJSONWrapper(custom_jsonwrapper, cls):
+                pass
+            CustomJSONWrapper.__name__ = cls.__name__
+            return CustomJSONWrapper
 
     if cls is None:
         # We need to return a class decorator
@@ -165,6 +163,7 @@ class JSONWrapper:
                        or annotations_type
                        or annotations_strict)
         default_attributes = {}
+        cls_annotations = typing.get_type_hints(cls)
 
         if not hasattr(cls, '__annotations__'):
             # There is nothing to check, don't provoke failure.
@@ -174,10 +173,10 @@ class JSONWrapper:
                 and hasattr(json_loaded_object, dict.keys.__name__)
                 and hasattr(json_loaded_object, dict.items.__name__)):
             # dict-like object + check_keys request
-            keys_a = set(cls.__annotations__.keys())
+            keys_a = set(typing.get_type_hints(cls))
             keys_j = set(json_loaded_object.keys())
 
-            for k, t in cls.__annotations__.items():
+            for k, t in cls_annotations.items():
                 if hasattr(cls, k):
                     # A default value has been set by user
                     # a. Check consistent default type with annotation
@@ -209,13 +208,13 @@ class JSONWrapper:
                     ))
 
         if (annotations_type
-                and hasattr(cls, '__annotations__')
                 and hasattr(json_loaded_object, dict.items.__name__)):
+            cls_annotations = typing.get_type_hints(cls)
             for k, v in json_loaded_object.items():
-                if k in cls.__annotations__:
+                if k in cls_annotations:
                     # Let coverage to annotations and annotations_strict checks
                     # Here we just check that received data is of expected type
-                    t = cls.__annotations__[k]
+                    t = cls_annotations[k]
                     if isinstance(t, list):
                         raise TypeError(
                                 "Use typing.List instead of [] or list for "
@@ -232,20 +231,19 @@ class JSONWrapper:
                     # Set it.
                     setattr(new_obj, k, v)
             for k, v in json_loaded_object.items():
-                if annotations and k in cls.__annotations__:
+                if annotations and k in cls_annotations:
                     # Recursive Wrapper case, we want to set the
                     # same parameters as requested by user.
-                    if hasattr(cls, '__annotations__'):
-                        type_a = cls.__annotations__[k]
-                        try:
-                            if issubclass(type_a, JSONWrapper):
-                                setattr(new_obj, k, type_a(v))
-                                # Successfully set, skip to next attribute.
-                                continue
-                        except TypeError:
-                            # type_a is not a JSONWrapper Child,
-                            # use generic case below.
-                            pass
+                    type_a = cls_annotations[k]
+                    try:
+                        if issubclass(type_a, JSONWrapper):
+                            setattr(new_obj, k, type_a(v))
+                            # Successfully set, skip to next attribute.
+                            continue
+                    except TypeError:
+                        # type_a is not a JSONWrapper Child,
+                        # use generic case below.
+                        pass
 
                 # Generic case
                 setattr(new_obj, k,
