@@ -2,7 +2,6 @@ import unittest
 import typing
 import logging
 
-
 from jsonloader import JSONWrapper, JSONclass
 from jsonloader import JSONWrapperAnnotations
 from jsonloader import JSONWrapperStrict

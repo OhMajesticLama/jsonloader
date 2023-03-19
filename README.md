@@ -153,6 +153,3 @@ For example, leverage `coverage` module:
 coverage run -m pytest --doctest-modules
 coverage html
 ```
-
-
-
