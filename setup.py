@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     setuptools.setup(
         name="jsonloader",
-        version="0.8.0",
+        version="0.9.0",
         author_email="ohmajesticlama@gmail.com",
         description=description_short,
         long_description=long_description,
@@ -27,7 +27,7 @@ if __name__ == '__main__':
         packages=setuptools.find_packages(),
         python_requires=">=3.8.10",
         install_requires=[
-            'typeguard >= 2.13.3'
+            'typeguard >= 3.0.1'
             ],
         extras_require={
             'dev': [

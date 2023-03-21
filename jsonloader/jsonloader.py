@@ -182,7 +182,6 @@ class JSONWrapper:
                     # a. Check consistent default type with annotation
                     if annotations_type:
                         typeguard.check_type(
-                                '{}: default of {}'.format(k, getattr(cls, k)),
                                 getattr(cls, k), t)
 
                     # b. Discard key from keys availability in loaded object.
@@ -220,7 +219,10 @@ class JSONWrapper:
                                 "Use typing.List instead of [] or list for "
                                 "annotated types. Nested types in [] will not "
                                 "be checked.")
-                    typeguard.check_type('{}: {}'.format(k, v), v, t)
+                    try:
+                        typeguard.check_type(v, t)
+                    except typeguard.TypeCheckError as exc:
+                        raise TypeError(*exc.args)
 
         if hasattr(json_loaded_object, dict.items.__name__):
             # we're in a dict, let's set attributes
@@ -275,8 +277,9 @@ class JSONWrapper:
         try:
             return self.__dict__ == other
         except Exception as exc:
-            raise TypeError(f"{self.__class__.__name__} can't compare to "
-                            "{type(other)}") from exc
+            raise TypeError(
+                    f"{self.__class__.__name__} can't compare to "
+                    "{type(other)}") from exc
 
     def __len__(self):
         return len(self.__dict__)
