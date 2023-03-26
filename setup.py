@@ -27,7 +27,7 @@ if __name__ == '__main__':
         packages=setuptools.find_packages(),
         python_requires=">=3.8.10",
         install_requires=[
-            'typeguard >= 3.0.1'
+            'typeguard >= 3.0.1, <4.0.0'
             ],
         extras_require={
             'dev': [
